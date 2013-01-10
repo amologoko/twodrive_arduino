@@ -1,0 +1,153 @@
+#include <stdio.h>
+#include <stdint.h>
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// redirect standard output
+//////////////////////////////////////////////////////////////////////////////////////////
+static FILE uartout = {0} ;
+
+// create a output function
+// This works because Serial.write, although of
+// type virtual, already exists.
+static int uart_putchar (char c, FILE *stream)
+{
+    Serial.write(c) ;
+    return 0 ;
+}
+
+void setup(void)
+{
+   // Start the UART
+   Serial.begin(9600) ;
+   Serial.setTimeout(1000000);
+
+   // fill in the UART file descriptor with pointer to writer.
+   fdev_setup_stream (&uartout, uart_putchar, NULL, _FDEV_SETUP_WRITE);
+
+   // The uart is the standard output device STDOUT.
+   stdout = &uartout;
+   
+   printf("Booting 2Drive, version %d\n", 1);
+}
+
+
+typedef union twodrive_block_st {
+    struct {
+      uint8_t    byte3; //NumDays[5], DD[3]
+      uint8_t    byte2; //DD[2], MM[4], YY%4[2]
+      uint8_t    byte1;
+      uint8_t    byte0;
+    } bytes;
+    struct {
+         uint16_t   word1;
+	 uint16_t   word0;
+    } words;
+    uint32_t   dword;
+} twodrive_block_t;
+
+typedef struct twodrive_ctx_st {
+	uint8_t rounds;
+	uint32_t *s;
+} twodrive_ctx_t; 
+
+typedef struct twodrive_data_st {
+	uint16_t year;
+	uint8_t  month;
+	uint8_t  day;
+	uint8_t  ndays;
+} twodrive_data_t; 
+
+
+unsigned short fletcher16( uint8_t *data, size_t bytes )
+{
+        uint16_t sum1 = 0xff, sum2 = 0xff;
+ 
+        while (bytes) {
+                size_t tlen = bytes > 20 ? 20 : bytes;
+                bytes -= tlen;
+                do {
+                        sum2 += sum1 += *data++;
+                } while (--tlen);
+                sum1 = (sum1 & 0xff) + (sum1 >> 8);
+                sum2 = (sum2 & 0xff) + (sum2 >> 8);
+        }
+        /* Second reduction step to reduce sums to 8 bits */
+        sum1 = (sum1 & 0xff) + (sum1 >> 8);
+        sum2 = (sum2 & 0xff) + (sum2 >> 8);
+        return sum2 << 8 | sum1;
+}
+
+uint32_t twodrive_enc(void *pdata, void *pctx)
+{
+	twodrive_block_t ret;
+        twodrive_data_t *data = (twodrive_data_t *)pdata;
+        twodrive_ctx_t  *ctx  = (twodrive_ctx_t  *)pctx;
+
+  	if(data->month > 12 || data->day > 31 || data->ndays > 31)
+		return 0;
+
+	ret.dword = 0x0;
+	ret.bytes.byte3 = data->day << 5 | data->ndays;
+	ret.bytes.byte2 = (data->year % 4) << 6 | data->month << 2 | data->day >> 3;
+	ret.words.word0 = fletcher16((uint8_t *)&ret, 2);
+
+	//TODO: Encrypt ret 32-bit block using RC5 here
+	return ret.dword;
+}
+
+uint8_t twodrive_dec(uint32_t block, void *pdata, void *pctx)
+{
+        twodrive_data_t *data = (twodrive_data_t *)pdata;
+        twodrive_ctx_t  *ctx  = (twodrive_ctx_t  *)pctx;
+  
+	twodrive_block_t ret;
+	ret.dword = block;
+
+	//TODO: decrypt ret 32-bit block using RC5 here
+	if (ret.words.word0 != fletcher16((uint8_t *)&ret, 2))
+		return 0;
+
+	data->ndays = ret.bytes.byte3 & 0x1f;
+	data->day = (ret.bytes.byte2 & 0x03) << 3 | ret.bytes.byte3 >> 5;
+	data->month = (ret.bytes.byte2 >> 2) & 0x0f;
+	data->year = (ret.bytes.byte2 >> 6) & 0x03;
+
+	return 1;
+}
+
+int twodrive_main()
+{
+        char buf[32];
+    
+	twodrive_ctx_t ctx;
+	twodrive_data_t data;
+	twodrive_data_t data2;
+        uint32_t code, code2;
+        
+	data.year = 2012;
+	data.month = 8;
+	data.day = 13;
+	data.ndays = 10;
+
+	//code = twodrive_enc(&data, &ctx);
+	//printf("Access code: %ld\n", code);
+        printf("Enter the code:  ");
+        Serial.readBytesUntil('X', buf, 32);
+        code2 = strtol(buf, NULL, 10);
+        printf("Received code %ldx\n", code, code2);
+        
+        //if (code != code2) {
+        //    printf("Codes don't match:  %08lx %08lx\n", code, code2);
+        //}
+        
+	if(!twodrive_dec(code, &data2, &ctx))
+		printf("Checksum %d test failed!\n");
+	else
+		printf("Code valid for %d days starting %d/%d\n", data2.ndays, data2.month, data2.day);		
+
+}
+
+void loop () {
+    twodrive_main();
+    delay(5000);
+}
