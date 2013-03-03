@@ -1,4 +1,4 @@
-void lcd_setup(char mode_8bit, char rs, char rw, char e, char *b, char lcdp, char lcdn);
+void lcd_setup(char mode_8bit, char rs, char rw, char e, char *b, char lcdp);
 void lcd_wr(char rs, char data);
 char lcd_rd(char rs);
 void lcd_str_pos(char *str, char off, char clr);

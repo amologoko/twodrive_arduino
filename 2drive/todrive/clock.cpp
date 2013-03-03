@@ -291,3 +291,4 @@ char *rtc_ctime_date() {
 char *rtc_ctime() {
     return asctime(rtc_get_tm());
 }
+

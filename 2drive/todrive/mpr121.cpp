@@ -5,7 +5,7 @@
 #include "mpr121.h"
 #include <I2C.h>
 
-int     irq_pin    = 2;
+int     irq_pin    = 7;
 boolean touchStates[12];     // keep track of the previous touch states
 char   *touchChars = "0123456789*#";
 
@@ -21,7 +21,7 @@ void mpr121_set_register(byte r, byte v){
      
     b = I2c.receive();
     if (b != v) {
-        printf("reg_write:  %02x write=%02x read=%02x\n", r, v, b);
+        //printf("reg_write:  %02x write=%02x read=%02x\n", r, v, b);
     }
 }
 
@@ -35,7 +35,7 @@ byte mpr121_get_byte(byte addr) {
         c++;
     }
     if (c != 1) {
-        printf("ERROR:  read %d bytes\n", c);
+        printf("E: read %d bytes\n", c);
     }
     return b;
 }
@@ -89,9 +89,9 @@ void mpr121_setup(void) {
   //set_register(ATO_CFGL, 0x82);  // LSL = 0.65*USL = 0x82 @3.3V          - from datasheet
   //set_register(ATO_CFGT, 0xB5);  // Target = 0.9*USL = 0xB5 @3.3V        - from datasheet
 
-    printf("AFE:  %02x\n", get_byte(AFE_CFG));
+    //printf("AFE:  %02x\n", get_byte(AFE_CFG));
     set_register(AFE_CFG, 0x10);    // change current level from 16 to 32 uA
-    printf("AFE:  %02x\n", get_byte(AFE_CFG));
+    //printf("AFE:  %02x\n", get_byte(AFE_CFG));
   
     // enter run state 
     // copy initial values into baseline register
@@ -121,7 +121,7 @@ void mpr121_calib(int val, int tol) {
             c++;
         }
         if (c != 2) {
-            printf("ERROR:  read %d bytes\n", c);
+            printf("E: read %d bytes\n", c);
         }
         printf("%04x  ", w);
     }
@@ -135,7 +135,7 @@ void mpr121_isr_read_inputs() {
     byte     MSB;
     uint16_t touched;
 
-    printf("In ISR\n");
+    //printf("In ISR\n");
     wakeUp();
         
     //read the touch state from the MPR121
@@ -257,7 +257,7 @@ void mpr121_dump_data() {
             c++;
         }
         if (c != 2) {
-            printf("ERROR:  read %d bytes\n", c);
+            printf("E: read %d bytes\n", c);
         }
         printf("%04x  ", w);
     }
@@ -274,7 +274,7 @@ void mpr121_dump_data() {
             c++;
         }
         if (c != 1) {
-            printf("ERROR:  read %d bytes\n", c);
+            printf("E: read %d bytes\n", c);
         }
         
         // baseline regs contain 8MSBs
@@ -291,9 +291,9 @@ void mpr121_isr(byte on, void (*f)(void)) {
     //printf("registering ISR %d\n", on);
     if (on) {
         // clear any pending status
-        attachInterrupt(0, f, FALLING);
+        attachInterrupt(4, f, FALLING);
         mpr121_read_char();
     } else {
-        detachInterrupt(0);
+        detachInterrupt(4);
     }
 }

@@ -4,8 +4,9 @@
 
 #include "bt.h"
 #include "eeprom.h"
+#include "clock.h"
 
-SoftwareSerial serial_bt(13, 6); // RX, TX
+SoftwareSerial serial_bt(8, 9); // RX, TX
 
 char bt_cmd[CMD_MAX_LEN+1];
 char bt_cmd_len;
@@ -31,7 +32,7 @@ int bt_loop()
 {
     char c;
     int  cnt = 0;
-    char buf[32];
+    char buf[64];
 
     if (bt_mid_cmd == 0) {
         serial_bt.print("2drive>  ");
@@ -69,8 +70,12 @@ int bt_loop()
             if (strncmp(bt_cmd, BT_CMD_SN, strlen(BT_CMD_SN)) == 0) {
                 sprintf(buf, "Serial number:  %s\n", eeprom_sern_read());
                 bt_response(buf);
-            }
-            else if (strncmp(bt_cmd, BT_CMD_CODE, strlen(BT_CMD_SN)) == 0) {
+            } else if (strncmp(bt_cmd, BT_CMD_TIME, strlen(BT_CMD_SN)) == 0) {
+                //sprintf(buf, "Date:  %s\n", rtc_ctime_date());
+                //bt_response(buf);
+                //sprintf(buf, "Time:  %s\n", rtc_ctime_time());
+                bt_response(buf);
+            } else if (strncmp(bt_cmd, BT_CMD_CODE, strlen(BT_CMD_SN)) == 0) {
                 sprintf(buf, "Serial number:  %s\n", eeprom_sern_read());
                 bt_response(buf);
             } else {

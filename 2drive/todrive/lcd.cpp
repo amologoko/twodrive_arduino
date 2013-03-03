@@ -8,7 +8,6 @@ static char  pin_rw;
 static char  pin_e;
 static char  pin_b[8];
 static char  pin_lcdp;
-static char  pin_lcdn;
 
 static char  b_rn_w;
 static char  b_lcd;
@@ -154,7 +153,7 @@ void lcd_on(int on) {
 }
 
 
-void lcd_setup(char mode_8bit, char rs, char rw, char e, char *b, char lcdp, char lcdn) {
+void lcd_setup(char mode_8bit, char rs, char rw, char e, char *b, char lcdp) {
     int i;
 
     // configure things
@@ -168,7 +167,6 @@ void lcd_setup(char mode_8bit, char rs, char rw, char e, char *b, char lcdp, cha
     pin_rw   = rw;
     pin_e    = e;
     pin_lcdp = lcdp;
-    pin_lcdn = lcdn;
 
     for (i=0; i<_lcd_pins; i++) {
         pin_b[i] = b[i];
@@ -181,7 +179,6 @@ void lcd_setup(char mode_8bit, char rs, char rw, char e, char *b, char lcdp, cha
     lcd_bus_dir(1);
 
     pinMode(pin_lcdp,  OUTPUT);
-    pinMode(pin_lcdn,  OUTPUT);
 
     lcd_backlight(1);
 

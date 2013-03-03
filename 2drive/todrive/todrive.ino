@@ -12,18 +12,27 @@
 #include "bt.h"
 #include "ui.h"
 #include "code.h"
+#include "elm.h"
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // configuration
 //////////////////////////////////////////////////////////////////////////////////////////
 
-char PIN_LCD_RS     = 22;
-char PIN_LCD_RW     = 24; 
-char PIN_LCD_E      = 26;
-char PIN_LCD_B8[8]  = {28, 30, 32, 34, 36, 38, 40, 42};
-char PIN_LCD_B4[4]  = {                36, 38, 40, 42};
-char PIN_LCD_LCDP   = 44;
-char PIN_LCD_LCDN   = 46;
+// char PIN_LCD_RS     = 22;
+// char PIN_LCD_RW     = 24; 
+// char PIN_LCD_E      = 26;
+// char PIN_LCD_B8[8]  = {28, 30, 32, 34, 36, 38, 40, 42};
+// char PIN_LCD_B4[4]  = {                36, 38, 40, 42};
+// char PIN_LCD_LCDP   = 44;
+
+char PIN_LCD_RS     = A3;
+char PIN_LCD_RW     = A2; 
+char PIN_LCD_E      = A1;
+char PIN_LCD_B4[4]  = {A0, 15, 14, 16};
+char PIN_LCD_LCDP   = 10;
+
+char PIN_ELM_UARTRX = 8;
+char PIN_ELM_UARTTX = 9;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -83,15 +92,15 @@ void setup(void)
     printf("2Drive, ver %d\n", 1);
 
     // configure the LCD
-    printf("Config LCD\n");
-    lcd_setup(0, PIN_LCD_RS, PIN_LCD_RW, PIN_LCD_E, PIN_LCD_B4, PIN_LCD_LCDP, PIN_LCD_LCDN);
-    //lcd_setup(1, PIN_LCD_RS, PIN_LCD_RW, PIN_LCD_E, PIN_LCD_B8, PIN_LCD_LCDP, PIN_LCD_LCDN);
+    //printf("Config LCD\n");
+    lcd_setup(0, PIN_LCD_RS, PIN_LCD_RW, PIN_LCD_E, PIN_LCD_B4, PIN_LCD_LCDP);
+    //lcd_setup(1, PIN_LCD_RS, PIN_LCD_RW, PIN_LCD_E, PIN_LCD_B8, PIN_LCD_LCDP);
     lcd_str("2Drive, ver 1");
     lcd_pos(40);
     delay(500);
 
     // start the I2C interface
-    printf("Config I2C\n");
+    //printf("Config I2C\n");
     lcd_str_pos(".", 40, 0);
     I2c.begin();
     I2c.timeOut(3000);
@@ -111,12 +120,17 @@ void setup(void)
 
     // configure bluetooth
     printf("Config Bluetooth\n");
-    lcd_str_pos(".", 43, 0);
-    bt_setup();
+//    lcd_str_pos(".", 43, 0);
+//    bt_setup();
+//    delay(250);
+
+    printf("Config ELM327\n");
+    lcd_str_pos(".", 44, 0);
+    elm_setup(PIN_ELM_UARTRX, PIN_ELM_UARTTX);
     delay(250);
 
     printf("Booting complete\n");
-    lcd_str_pos(".", 44, 0);
+    lcd_str_pos(".", 45, 0);
     delay(250);
 
     // setup serial # if not already set
@@ -129,7 +143,7 @@ void setup(void)
     if (eeprom_pass_read() == PASS_UNSET) {
         pass_setup();
     }
-    printf("Current password is:  %ld\n", eeprom_pass_read());
+    //printf("Current password is:  %ld\n", eeprom_pass_read());
 
     // initialize the crypto
     crypt_setup();
@@ -160,6 +174,7 @@ unsigned long ts_bt_last = 0;
 void loop() {
     int c_in;
 
+    /*
     // interactive debug interface
     if (Serial.available() > 0) {
         c_in = Serial.read();
@@ -232,6 +247,7 @@ void loop() {
             printf("Unknown command '%c'\n", c_in);
         }
     }
+*/
 
     // sleep if no bluetooth activity detected for 30 seconds
     if ((millis() / 1000)- ts_bt_last > 30) {

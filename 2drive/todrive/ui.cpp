@@ -6,7 +6,9 @@
 #include "clock.h"
 #include "code.h"
 #include "time.h"
+#include "elm.h"
 
+#define CODE_LOCK      "#000"
 #define CODE_TIME      "#100"
 #define CODE_SERN      "#101"
 #define CODE_PASS      "#102"
@@ -65,8 +67,18 @@ int twodrive_code_read_keypad()
                         }
 
                     } else if (strncmp(s, CODE_PASS, sizeof(CODE_PASS)) == 0) {
-                        pass_setup();
-                        delay(3000);
+                        if (eeprom_pass_read() != PASS_UNSET) {
+                            if (pass_check()) {
+                                pass_setup();
+                                delay(3000);
+                            }
+                        }
+                    } else if (strncmp(s, CODE_LOCK, sizeof(CODE_LOCK)) == 0) {
+                        lcd_cursor(0, 0);
+                        printf("Locking the door\n");
+                        lcd_str("Locking the door");
+                        elm_prius_lock(1);
+                        delay(5000);
                     }
 
                     lcd_cursor(1, 0);
@@ -127,6 +139,7 @@ int twodrive_code_read_keypad()
                 sprintf(s, "Valid %d days", days_valid);
                 lcd_str("Accepted");
                 lcd_str_pos(s, 40, 0);		                
+                elm_prius_lock(0);
             } else {
                 lcd_str("Invalid dates");
                 delay(1000);
