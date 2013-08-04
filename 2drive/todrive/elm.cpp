@@ -4,21 +4,54 @@
 #include <Arduino.h>
 
 SoftwareSerial *serial_elm;
+char elm_buf[32];
+int  elm_ptr;
 
-void elm_setup(int rx_pin, int tx_pin) 
+int elm_setup(int rx_pin, int tx_pin) 
 {
+    memset(elm_buf, 0, sizeof(elm_buf));
+    elm_ptr = 0;
     serial_elm = new SoftwareSerial(rx_pin, tx_pin); // RX, TX
+
+    // pull-up RX pin
+    pinMode(rx_pin, INPUT);
+    digitalWrite(rx_pin, 1);    
 
     serial_elm->begin(9600);
 
+    // clear whatever is pending
+    elm_cmd("AT", 0, 1000);
+    elm_cmd("AT", 0, 1000);
+
+    elm_buf[elm_ptr] = '1'; if (elm_ptr < 30) elm_ptr++;
+
     // get a prompt
-    elm_cmd("AT", 0, 10000);
+    if (elm_cmd("AT", 0, 3000)) {
+        return 1;
+    }
+
+    elm_buf[elm_ptr] = '2';  if (elm_ptr < 30) elm_ptr++;
 
     // received prompt
-    elm_cmd("ATL1",   0, 10000);
-    elm_cmd("ATH1",   0, 10000);
-    elm_cmd("ATCAF0", 0, 10000);
+    if (elm_cmd("ATL1",   0, 3000)) {
+        return 2;
+    }
 
+    elm_buf[elm_ptr] = '3';  if (elm_ptr < 30) elm_ptr++;
+    printf("xx\n");
+
+    if (elm_cmd("ATH1",   0, 3000)) {
+        return 3;
+    }
+    printf("yy\n");
+
+    if (elm_cmd("ATCAF0", 0, 3000)) {
+        return 4;
+    }
+
+    printf("zz\n");
+
+    return 0;
 }
 
 int elm_cmd(char *cmd, int send_at, int timeout_ms) 
@@ -36,7 +69,7 @@ int elm_cmd(char *cmd, int send_at, int timeout_ms)
     }  
 
     serial_elm->println(cmd);
-    printf(cmd);
+    printf(":%s:\n", cmd);
     delay(1);
 
     t_start = millis();
@@ -54,6 +87,7 @@ int elm_cmd(char *cmd, int send_at, int timeout_ms)
             }
 
             putchar(c);
+            elm_buf[elm_ptr] = c;  if (elm_ptr < 30) elm_ptr++;
             if (c == '>') {
                 p = 1;
             }

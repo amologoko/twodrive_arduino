@@ -31,8 +31,8 @@ char PIN_LCD_E      = A1;
 char PIN_LCD_B4[4]  = {A0, 15, 14, 16};
 char PIN_LCD_LCDP   = 10;
 
-char PIN_ELM_UARTRX = 8;
-char PIN_ELM_UARTTX = 9;
+char PIN_ELM_UARTRX = 9;
+char PIN_ELM_UARTTX = 8;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -79,6 +79,9 @@ void wakeUp() {
 
 void setup(void)
 {
+    char buf[2];
+    int  rc;
+
     // Start the UART
     Serial.begin(9600) ;
     //Serial.setTimeout(1000000);
@@ -95,7 +98,12 @@ void setup(void)
     //printf("Config LCD\n");
     lcd_setup(0, PIN_LCD_RS, PIN_LCD_RW, PIN_LCD_E, PIN_LCD_B4, PIN_LCD_LCDP);
     //lcd_setup(1, PIN_LCD_RS, PIN_LCD_RW, PIN_LCD_E, PIN_LCD_B8, PIN_LCD_LCDP);
-    lcd_str("2Drive, ver 1");
+
+    lcd_str("Ver: " __DATE__);
+    lcd_str_pos(__TIME__, 40, 0);
+    delay(1000);
+
+    lcd_str("2Drive");    
     lcd_pos(40);
     delay(500);
 
@@ -107,29 +115,43 @@ void setup(void)
     delay(250);
 
     // configure RTC
-    printf("Config RTC\n");
+    //printf("Config RTC\n");
     lcd_str_pos(".", 41, 0);
     rtc_setup();
     delay(250);
     
     // run initial MPR121 initialization
-    printf("Config touchpad\n");
+    //printf("Config touchpad\n");
     lcd_str_pos(".", 42, 0);
     mpr121_setup();
     delay(250);
 
     // configure bluetooth
-    printf("Config Bluetooth\n");
-//    lcd_str_pos(".", 43, 0);
-//    bt_setup();
-//    delay(250);
-
-    printf("Config ELM327\n");
-    lcd_str_pos(".", 44, 0);
-    elm_setup(PIN_ELM_UARTRX, PIN_ELM_UARTTX);
+    //printf("Config Bluetooth\n");
+    lcd_str_pos(".", 43, 0);
+    bt_setup();
     delay(250);
 
-    printf("Booting complete\n");
+    //printf("Config ELM327\n");
+    rc = elm_setup(PIN_ELM_UARTRX, PIN_ELM_UARTTX);
+    if (rc) {
+        lcd_str_pos("x", 44, 0);
+        delay(2000);
+        
+        // print the RC
+        sprintf(buf, "%d", rc);
+        lcd_str_pos(buf, 44, 0);
+        delay(2000);
+
+        // dump the buffer
+        //extern char elm_buf[256];
+        //lcd_str_pos(elm_buf, 0, 0);
+    } else {
+        lcd_str_pos(".", 44, 0);
+    }
+    delay(250);
+
+    //printf("Booting complete\n");
     lcd_str_pos(".", 45, 0);
     delay(250);
 
@@ -137,13 +159,13 @@ void setup(void)
     if (eeprom_sern_valid() == 0) {
         sern_setup();
     }
-    printf("Serial # is:  %s\n", eeprom_sern_read());
+    //printf("Serial # is:  %s\n", eeprom_sern_read());
 
     // setup password if not already set
     if (eeprom_pass_read() == PASS_UNSET) {
         pass_setup();
     }
-    //printf("Current password is:  %ld\n", eeprom_pass_read());
+    //printf("Password:  %ld\n", eeprom_pass_read());
 
     // initialize the crypto
     crypt_setup();
@@ -256,7 +278,7 @@ void loop() {
     
     // if was woken up, attempt to read the code - routine will exit 
     if (awoke) {
-        printf("Awoke\n");
+        //printf("Awoke\n");
         mpr121_isr(0, wakeUp);
 
         twodrive_code_read_keypad();
