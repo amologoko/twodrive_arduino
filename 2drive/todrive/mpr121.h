@@ -57,6 +57,7 @@
 #define	ATO_CFGU	0x7D
 #define	ATO_CFGL	0x7E
 #define	ATO_CFGT	0x7F
+#define SRST        0x80                      // write with 0x63 to do a soft reset
 
 
 // Global Constants

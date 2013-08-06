@@ -50,19 +50,22 @@ void mpr121_setup(void) {
     pinMode(irq_pin, INPUT);
     digitalWrite(irq_pin, 1);
 
+    // start out with soft reset and sensing disabled
+    set_register(SRST,    0x63);
+    delay(200);
     set_register(ELE_CFG, 0x00); 
     
     // Section A - Controls filtering when data is > baseline.
-    set_register(MHD_R, 0x01);                                         // AN3891
-    set_register(NHD_R, 0x01);
-    set_register(NCL_R, 0x00);
-    set_register(FDL_R, 0x00);
+    set_register(MHD_R, 0x3F);                                         // AN3891
+    set_register(NHD_R, 0x4);
+    set_register(NCL_R, 2);
+    set_register(FDL_R, 2);
 
     // Section B - Controls filtering when data is < baseline.
-    set_register(MHD_F, 0x01);                                         // AN3891
-    set_register(NHD_F, 0x01);
-    set_register(NCL_F, 0xFF);
-    set_register(FDL_F, 0x02);
+    set_register(MHD_F, 0x3F);                                         // AN3891
+    set_register(NHD_F, 0x4);
+    set_register(NCL_F, 2);
+    set_register(FDL_F, 2);
   
     // Section C - Sets touch and release thresholds for each of 12 electrodes - electrode registers are consequtive
     for (i=0; i<12; i++) {
@@ -90,12 +93,13 @@ void mpr121_setup(void) {
   //set_register(ATO_CFGT, 0xB5);  // Target = 0.9*USL = 0xB5 @3.3V        - from datasheet
 
     //printf("AFE:  %02x\n", get_byte(AFE_CFG));
-    set_register(AFE_CFG, 0x10);    // change current level from 16 to 32 uA
+    //set_register(AFE_CFG, 0x10);    // change current level from 16 to 32 uA
+    set_register(AFE_CFG, 0x30);    // change current level from 16 to 32 uA
     //printf("AFE:  %02x\n", get_byte(AFE_CFG));
   
     // enter run state 
     // copy initial values into baseline register
-    set_register(ELE_CFG,  0xCC);    
+    set_register(ELE_CFG,  0xCC);                      // change to keep tracking baseline changes
 }
 
 //

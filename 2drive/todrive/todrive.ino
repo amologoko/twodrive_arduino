@@ -107,49 +107,57 @@ void setup(void)
     lcd_pos(40);
     delay(500);
 
-    // start the I2C interface
-    //printf("Config I2C\n");
-    lcd_str_pos(".", 40, 0);
-    I2c.begin();
-    I2c.timeOut(3000);
-    delay(250);
-
-    // configure RTC
-    //printf("Config RTC\n");
-    lcd_str_pos(".", 41, 0);
-    rtc_setup();
-    delay(250);
-    
-    // run initial MPR121 initialization
-    //printf("Config touchpad\n");
-    lcd_str_pos(".", 42, 0);
-    mpr121_setup();
-    delay(250);
-
-    // configure bluetooth
-    //printf("Config Bluetooth\n");
-    lcd_str_pos(".", 43, 0);
-    bt_setup();
-    delay(250);
-
     //printf("Config ELM327\n");
     rc = elm_setup(PIN_ELM_UARTRX, PIN_ELM_UARTTX);
     if (rc) {
-        lcd_str_pos("x", 44, 0);
+        lcd_str_pos("x", 40, 0);
         delay(2000);
         
         // print the RC
         sprintf(buf, "%d", rc);
-        lcd_str_pos(buf, 44, 0);
+        lcd_str_pos(buf, 40, 0);
         delay(2000);
 
         // dump the buffer
         //extern char elm_buf[256];
         //lcd_str_pos(elm_buf, 0, 0);
     } else {
-        lcd_str_pos(".", 44, 0);
+        lcd_str_pos(".", 40, 0);
     }
     delay(250);
+
+    // start the I2C interface
+    //printf("Config I2C\n");
+    lcd_str_pos(".", 41, 0);
+    I2c.begin();
+    I2c.timeOut(3000);
+    delay(250);
+
+    // configure RTC
+    printf("Config RTC\n");
+    lcd_str_pos(".", 42, 0);
+    rtc_setup();
+    delay(250);
+    
+    // run initial MPR121 initialization
+    //printf("Config touchpad\n");
+    lcd_str_pos(".", 43, 0);
+    mpr121_setup();
+    delay(250);
+
+    // // debug - keep dumping MPR121 data once a second - use to debug
+    // printf("Starting to dump data\n");
+    // while (1) {
+    //     printf("Dumping data\n");
+    //     mpr121_dump_data();
+    //     delay(1000);
+    // }
+
+    // configure bluetooth
+    //printf("Config Bluetooth\n");
+    //lcd_str_pos(".", 44, 0);
+    //bt_setup();
+    //delay(250);
 
     //printf("Booting complete\n");
     lcd_str_pos(".", 45, 0);
