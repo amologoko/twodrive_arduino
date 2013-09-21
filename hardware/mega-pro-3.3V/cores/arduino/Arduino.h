@@ -1,6 +1,8 @@
 #ifndef Arduino_h
 #define Arduino_h
 
+#define __AVR_LIBC_DEPRECATED_ENABLE__ 1
+
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
