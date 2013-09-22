@@ -1,0 +1,8 @@
+MPRO2560    ProMicro
+
+GND         GND
+3.3V        Raw
+53          Rst
+52          15 (SCK)
+51          16 (MOSI)
+50          14 (MISO)
