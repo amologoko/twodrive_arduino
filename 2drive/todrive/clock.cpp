@@ -154,7 +154,7 @@ byte ds1338_get_byte(byte addr) {
         c++;
     }
     if (c != 1) {
-        printf("ERROR:  read %d bytes\n", c);
+        //printf("ERROR:  read %d bytes\n", c);
     }
     return b;
 }
@@ -169,7 +169,7 @@ int ds1338_get_ts(byte *arr) {
         c++;
     }
     if (c != 7) {
-        printf("ERROR:  read %d bytes\n", c);
+        //printf("ERROR:  read %d bytes\n", c);
         return -1;
     }
     return c;
@@ -195,14 +195,14 @@ void rtc_dump()
     byte b[7];
 
     for (i=0; i<8; i++) {
-        printf("%d:  %02x\n", i, ds1338_get_byte(i));
+        //printf("%d:  %02x\n", i, ds1338_get_byte(i));
     }
     ds1338_get_ts(b);
     for (i=0; i<7; i++) {
-        printf("ts %d:  %02x\n", i, b[i]);
+        //printf("ts %d:  %02x\n", i, b[i]);
     }
-    printf("%s\n", rtc_ctime_time());
-    printf("%s", rtc_ctime());
+    //printf("%s\n", rtc_ctime_time());
+    //printf("%s", rtc_ctime());
 }
 
 // shared buffers

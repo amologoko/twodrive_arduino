@@ -35,7 +35,7 @@ byte mpr121_get_byte(byte addr) {
         c++;
     }
     if (c != 1) {
-        printf("E: read %d bytes\n", c);
+        //printf("E: read %d bytes\n", c);
     }
     return b;
 }
@@ -125,11 +125,11 @@ void mpr121_calib(int val, int tol) {
             c++;
         }
         if (c != 2) {
-            printf("E: read %d bytes\n", c);
+            //printf("E: read %d bytes\n", c);
         }
-        printf("%04x  ", w);
+        //printf("%04x  ", w);
     }
-    printf("\n");
+    //printf("\n");
 }
 
 void wakeUp();
@@ -294,9 +294,7 @@ void mpr121_isr(byte on, void (*f)(void)) {
     // register an interrupt
     //printf("registering ISR %d\n", on);
     if (on) {
-        // clear any pending status
         attachInterrupt(4, f, FALLING);
-        mpr121_read_char();
     } else {
         detachInterrupt(4);
     }

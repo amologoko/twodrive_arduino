@@ -136,7 +136,7 @@ void crypt_setup() /* secret input key K[0...KEYSIZE-1]   */
   for (int j=0; j < KEYSIZE; j++) 
       SetKey((unsigned char)keystr[j]);
 
-  printf("Setting up crypto with key %s :: %d\n", keystr, sizeof(WORD));
+  //printf("Setting up crypto with key %s :: %d\n", keystr, sizeof(WORD));
 
   /* Copy "ROM" into "RAM" */
   for (i=0; i < TableSize; i++) 

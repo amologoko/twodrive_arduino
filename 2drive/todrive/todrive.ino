@@ -45,31 +45,28 @@ static FILE uartout = {0} ;
 // type virtual, already exists.
 static int uart_putchar (char c, FILE *stream)
 {
-  Serial.write(c) ;
-  return 0 ;
+    Serial.write(c) ;
+    return 0 ;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // touchpad ISR - if detected while in sleep, go to code input processing loop
 /////////////////////////////////////////////////////////////////////////////////////////
-int twodrive_code_read_bt();
+volatile int keypad_asleep = 0;
+volatile unsigned long ts_kp_last = 0;
 
-int awoke = 0;
-
-void wakeUp() {
+void kp_wake_up() {
     
-    //printf("WakeUp\n");
-
     // disable self, turn on the LCD and remove whatever character is in the buffer
     //mpr121_isr(0, NULL);
-    if (awoke == 0) {
+    if (keypad_asleep) {
         lcd_on(1);
         lcd_str("Wait...");
         mpr121_read_char();
-        awoke = 1;
         delay(100);
+        keypad_asleep = 0;
+        ts_kp_last = millis() / 1000;
     }
-    // set the awoke flag
 }
 
 
@@ -92,12 +89,11 @@ void setup(void)
     // The uart is the standard output device STDOUT.
     stdout = &uartout;
 
-    printf("2Drive, ver %d\n", 1);
+    //printf("2Drive, ver %d\n", 1);
 
     // configure the LCD
     //printf("Config LCD\n");
     lcd_setup(0, PIN_LCD_RS, PIN_LCD_RW, PIN_LCD_E, PIN_LCD_B4, PIN_LCD_LCDP);
-    //lcd_setup(1, PIN_LCD_RS, PIN_LCD_RW, PIN_LCD_E, PIN_LCD_B8, PIN_LCD_LCDP);
 
     lcd_str("Ver: " __DATE__);
     lcd_str_pos(__TIME__, 40, 0);
@@ -118,9 +114,6 @@ void setup(void)
         lcd_str_pos(buf, 40, 0);
         delay(2000);
 
-        // dump the buffer
-        //extern char elm_buf[256];
-        //lcd_str_pos(elm_buf, 0, 0);
     } else {
         lcd_str_pos(".", 40, 0);
     }
@@ -134,7 +127,7 @@ void setup(void)
     delay(250);
 
     // configure RTC
-    printf("Config RTC\n");
+    //printf("Config RTC\n");
     lcd_str_pos(".", 42, 0);
     rtc_setup();
     delay(250);
@@ -155,9 +148,9 @@ void setup(void)
 
     // configure bluetooth
     //printf("Config Bluetooth\n");
-    //lcd_str_pos(".", 44, 0);
-    //bt_setup();
-    //delay(250);
+    lcd_str_pos(".", 44, 0);
+    bt_setup();
+    delay(250);
 
     //printf("Booting complete\n");
     lcd_str_pos(".", 45, 0);
@@ -187,22 +180,20 @@ void setup(void)
     lcd_str("Ready");
     delay(1000);
 
-    //twodrive_code_read();
-
     lcd_str("Going to sleep");
     delay(1000);
     lcd_on(0);
     
-    // register the ISR - if keypad touched, will wake up and go to process the code
-    awoke = 0;
-    mpr121_isr(1, wakeUp);
+    // register the keypad ISR
+    keypad_asleep = 1;
+    mpr121_isr(1, kp_wake_up);
 }
 
-int first = 1;
 unsigned long ts_bt_last = 0;
 
 void loop() {
     int c_in;
+    unsigned long now;
 
     /*
     // interactive debug interface
@@ -277,25 +268,40 @@ void loop() {
             printf("Unknown command '%c'\n", c_in);
         }
     }
-*/
+    */
 
     // sleep if no bluetooth activity detected for 30 seconds
-    if ((millis() / 1000)- ts_bt_last > 30) {
+    now = millis() / 1000;
+    if (now - ts_bt_last > 30 && keypad_asleep) {
         delay(500);
     }
+
+    // read the keypad; track the last time an actual character was read
+    if (keypad_asleep == 0) {
+        if (twodrive_code_read_keypad()) {
+            ts_kp_last = now;
+        } else {
+            if (now - ts_kp_last > 30) {
+                twodrive_code_goto_sleep();
+                lcd_on(0);
+                keypad_asleep = 1;
+            }
+        }
+    }
+    
     
     // if was woken up, attempt to read the code - routine will exit 
-    if (awoke) {
-        //printf("Awoke\n");
-        mpr121_isr(0, wakeUp);
-
-        twodrive_code_read_keypad();
-
-        // if completed successfully or if expired
-        // re-register the ISR - if keypad touched, will wake up and go to process the code
-        awoke = 0;
-        mpr121_isr(1, wakeUp);
-    }
+//    if (awoke) {
+//        //printf("Awoke\n");
+//        mpr121_isr(0, wakeUp);
+//
+//        twodrive_code_read_keypad();
+//
+//        // if completed successfully or if expired
+//        // re-register the ISR - if keypad touched, will wake up and go to process the code
+//        awoke = 0;
+//        mpr121_isr(1, wakeUp);
+//    }
 
     // check the bluetooth - if anything is pending, start processing
     if (bt_rx_pending()) {

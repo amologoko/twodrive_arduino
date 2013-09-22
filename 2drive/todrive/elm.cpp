@@ -38,18 +38,18 @@ int elm_setup(int rx_pin, int tx_pin)
     }
 
     elm_buf[elm_ptr] = '3';  if (elm_ptr < 30) elm_ptr++;
-    printf("xx\n");
+    //printf("xx\n");
 
     if (elm_cmd("ATH1",   0, 3000)) {
         return 3;
     }
-    printf("yy\n");
+    //printf("yy\n");
 
     if (elm_cmd("ATCAF0", 0, 3000)) {
         return 4;
     }
 
-    printf("zz\n");
+    //printf("zz\n");
 
     return 0;
 }
@@ -69,7 +69,7 @@ int elm_cmd(char *cmd, int send_at, int timeout_ms)
     }  
 
     serial_elm->println(cmd);
-    printf(":%s:\n", cmd);
+    //printf(":%s:\n", cmd);
     delay(1);
 
     t_start = millis();
