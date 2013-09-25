@@ -8,6 +8,7 @@
 #include "time.h"
 #include "elm.h"
 #include "lcd.h"
+#include "ui.h"
 #include <Arduino.h>
 #include <avr/pgmspace.h>
 
@@ -96,9 +97,16 @@ int bt_loop()
         } else if (strncmp(bt_cmd, BT_CMD_LOCK, strlen(BT_CMD_LOCK)) == 0) {
             elm_prius_lock(1);
             sprintf(buf, "Locked");
-            bt_response(buf);                
+            bt_response(buf); 
+
+            // show the message on the display
+            lcd_on(1);
+            lcd_str("Locked (BT)");
+            delay(2000);
+            ui_goto_sleep();            
+               
         } else if (strncmp(bt_cmd, BT_CMD_CODE, strlen(BT_CMD_CODE)) == 0) {
-            bt_cmd[strlen(BT_CMD_CODE)+10] = 0;
+            bt_cmd[strlen(BT_CMD_CODE)+11] = 0;
             code = strtoul(bt_cmd + strlen(BT_CMD_CODE), NULL, 10);
             //sprintf(buf, "Code entered:  %s %lu", bt_cmd + strlen(BT_CMD_CODE), code);
             //bt_response(buf);
@@ -136,6 +144,13 @@ int bt_loop()
                     sprintf(buf, "Accepted, valid %d days", days_valid);
                     bt_response(buf);
                     elm_prius_lock(0);
+
+                    // show the message on the display
+                    lcd_on(1);
+                    lcd_str("Unlocked (BT)");
+                    delay(2000);
+                    ui_goto_sleep();
+
                 } else {
                     bt_response("Invalid dates");
                 }

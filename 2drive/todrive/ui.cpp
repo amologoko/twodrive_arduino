@@ -21,7 +21,7 @@ char kp_cmd_len;
 int  kp_mid_cmd = 0;
 
 
-int twodrive_code_read_keypad()
+int ui_read_keypad()
 {
 	twodrive_data_t data;
     uint32_t code;
@@ -149,10 +149,10 @@ int twodrive_code_read_keypad()
     return 1;
 }
 
-void twodrive_code_goto_sleep() {
+void ui_goto_sleep() {
     // if was mid-processing, stop and shut off the screen
     if (kp_mid_cmd == 1) {
         kp_mid_cmd = 0;
-        lcd_on(0);
     }
+    lcd_on(0);
 }

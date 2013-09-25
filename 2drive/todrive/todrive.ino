@@ -59,8 +59,8 @@ void kp_wake_up() {
     
     // disable self, turn on the LCD and remove whatever character is in the buffer
     //mpr121_isr(0, NULL);
+    lcd_on(1);
     if (keypad_asleep) {
-        lcd_on(1);
         lcd_str("Wait...");
         mpr121_read_char();
         delay(100);
@@ -278,11 +278,11 @@ void loop() {
 
     // read the keypad; track the last time an actual character was read
     if (keypad_asleep == 0) {
-        if (twodrive_code_read_keypad()) {
+        if (ui_read_keypad()) {
             ts_kp_last = now;
         } else {
             if (now - ts_kp_last > 30) {
-                twodrive_code_goto_sleep();
+                ui_goto_sleep();
                 lcd_on(0);
                 keypad_asleep = 1;
             }
